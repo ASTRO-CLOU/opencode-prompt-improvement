@@ -52,6 +52,9 @@ Tutti i comandi rispondono con notifiche e non avviano mai un agente.
 | `/imp-model [provider/id#variant]` | Scegli modello e variante; `status` mostra quello attuale |
 | `/imp-model off` | Mantieni la pulizia, disattiva le chiamate al modello |
 | `/imp-force <prompt>` | Migliora un prompt una volta, anche se il miglioramento è disattivato |
+| `/imp-config [chiave valore]` | Mostra o modifica le impostazioni a runtime |
+
+`/imp-config` mostra i valori correnti, modifica un'impostazione o azzera tutte le sovrascritture con `reset`. Usa `clear` come valore per rimuovere una singola sovrascrittura. Chiavi: `mode`, `model`, `maxGrowth`, `skipCommands`, `skipDetailed`, `detailedThreshold`, `llmTimeoutMs`.
 
 `/imp-force` reinvia il testo attraverso l'hook con un marcatore interno. Ignora l'interruttore e le regole di salto, ma mantiene tutti i controlli di sicurezza. Il marcatore non raggiunge mai il modello né la cronologia.
 
@@ -95,7 +98,7 @@ I comandi salvano le impostazioni per sessione. Le opzioni possono anche essere 
 
 - In modalità `llm` viene chiamato prima `ctx.experimental.generate.text`: solo il tuo testo e l'istruzione, senza il prompt di sistema di OpenCode. Una sessione temporanea è il fallback.
 
-- L'istruzione chiede tre righe (`Кто:` / `Задача:` / `Важно:`) e `/no_think` per Qwen3. I prompt con `@menzioni` saltano la fase LLM.
+- L'istruzione interna chiede tre righe con intestazioni localizzate: `Кто: / Задача: / Важно:` per input in russo, `Who: / Task: / Important:` per le altre lingue e `/no_think` per Qwen3. I prompt con `@menzioni` saltano la fase LLM.
 
 ## Sicurezza
 

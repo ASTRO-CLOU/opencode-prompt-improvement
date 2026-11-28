@@ -199,6 +199,7 @@ test("setup registers the prompt hook and every command", async () => {
     "imp-models",
     "imp-model",
     "imp-force",
+    "imp-config",
   ])
 })
 
@@ -541,5 +542,65 @@ test("a free usage error pauses later LLM calls", async () => {
 
   await harness.commands.get("imp-status")?.execute({ sessionID: "ses_1", prompt: {} })
   assert.match(harness.notices.at(-1)?.text ?? "", /LLM: cache 0; paused \d+m/)
+})
+
+test("imp-config reports the effective settings", async () => {
+  const harness = createHarness()
+  await harness.setup()
+
+  await harness.commands.get("imp-config")?.execute({ sessionID: "ses_1", prompt: {} })
+
+  const report = harness.notices.at(-1)?.text ?? ""
+  assert.match(report, /mode=deterministic/)
+  assert.match(report, /model=not set/)
+  assert.match(report, /maxGrowth=0\.4/)
+  assert.match(report, /skipCommands=true/)
+  assert.match(report, /skipDetailed=true/)
+  assert.match(report, /detailedThreshold=2000/)
+  assert.match(report, /llmTimeoutMs=20000/)
+})
+
+test("imp-config changes and clears runtime options", async () => {
+  const harness = createHarness()
+  await harness.setup()
+  const command = harness.commands.get("imp-config")
+
+  await command?.execute({ sessionID: "ses_1", prompt: { text: "maxGrowth 0.25" } })
+  await command?.execute({ sessionID: "ses_1", prompt: { text: "skipCommands false" } })
+
+  let stored = harness.storage.get("opencode-prompt-improvement.settings") as Record<string, unknown>
+  assert.equal(stored.maxGrowth, 0.25)
+  assert.equal(stored.skipCommands, false)
+
+  await command?.execute({ sessionID: "ses_1", prompt: { text: "maxGrowth clear" } })
+
+  stored = harness.storage.get("opencode-prompt-improvement.settings") as Record<string, unknown>
+  assert.equal("maxGrowth" in stored, false)
+  assert.equal(stored.skipCommands, false)
+})
+
+test("imp-config rejects unknown keys and invalid values", async () => {
+  const harness = createHarness()
+  await harness.setup()
+  const command = harness.commands.get("imp-config")
+
+  await command?.execute({ sessionID: "ses_1", prompt: { text: "unknown 5" } })
+  assert.equal(harness.notices.at(-1)?.text, "Unknown setting: unknown.")
+
+  await command?.execute({ sessionID: "ses_1", prompt: { text: "llmTimeoutMs fast" } })
+  assert.equal(harness.notices.at(-1)?.text, "Invalid value for llmTimeoutMs.")
+  assert.equal(harness.storage.get("opencode-prompt-improvement.settings"), undefined)
+})
+
+test("imp-config resets all runtime settings", async () => {
+  const harness = createHarness()
+  await harness.setup()
+  const command = harness.commands.get("imp-config")
+
+  await command?.execute({ sessionID: "ses_1", prompt: { text: "maxGrowth 0.3" } })
+  await command?.execute({ sessionID: "ses_1", prompt: { text: "reset" } })
+
+  assert.equal(harness.storage.get("opencode-prompt-improvement.settings"), undefined)
+  assert.match(harness.notices.at(-1)?.text ?? "", /mode=deterministic/)
 })
 

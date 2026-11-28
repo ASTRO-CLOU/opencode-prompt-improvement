@@ -1,17 +1,17 @@
-import type { ModelRef, RefineMode, RefineOptions, StorageLike } from "./types.ts"
+import { OPTION_KEYS, parseOptionValue, type OptionKey } from "./options.ts"
+import type { RefineOptions, StorageLike } from "./types.ts"
 
 const SETTINGS_KEY = "opencode-prompt-improvement.settings"
 
-export interface RuntimeSettings {
-  mode?: RefineMode
-  model?: ModelRef
-}
+export type RuntimeSettings = Partial<RefineOptions>
 
 export interface SettingsStore {
   read(): Promise<RuntimeSettings>
   clear(): Promise<void>
-  setMode(mode: RefineMode): Promise<void>
-  setModel(model?: ModelRef): Promise<void>
+  setOption(key: OptionKey, value: unknown): Promise<boolean>
+  clearOption(key: OptionKey): Promise<void>
+  setMode(mode: RefineOptions["mode"]): Promise<void>
+  setModel(model?: RefineOptions["model"]): Promise<void>
   effectiveOptions(base: RefineOptions): Promise<RefineOptions>
 }
 
@@ -19,39 +19,22 @@ function asRecord(value: unknown): Record<string, unknown> {
   return typeof value === "object" && value !== null ? (value as Record<string, unknown>) : {}
 }
 
-function readModel(value: unknown): ModelRef | undefined {
-  const record = asRecord(value)
-  const providerID = record.providerID
-  const id = record.id
-  if (typeof providerID !== "string" || providerID.length === 0) return undefined
-  if (typeof id !== "string" || id.length === 0) return undefined
-  const variant = record.variant
-  return typeof variant === "string" && variant.length > 0
-    ? { providerID, id, variant }
-    : { providerID, id }
-}
-
 export function parseSettings(value: unknown): RuntimeSettings {
   const record = asRecord(value)
   const settings: RuntimeSettings = {}
 
-  if (record.mode === "llm" || record.mode === "deterministic") {
-    settings.mode = record.mode
+  for (const key of OPTION_KEYS) {
+    if (!Object.keys(record).includes(key)) continue
+    const parsed = parseOptionValue(key, record[key])
+    if (parsed === undefined) continue
+    ;(settings as Record<string, unknown>)[key] = parsed
   }
-
-  const model = readModel(record.model)
-  if (model !== undefined) settings.model = model
 
   return settings
 }
 
 export function mergeSettings(base: RefineOptions, stored: RuntimeSettings): RefineOptions {
-  const model = stored.model !== undefined ? stored.model : base.model
-  return {
-    ...base,
-    ...(model !== undefined ? { model } : {}),
-    mode: stored.mode ?? base.mode,
-  }
+  return { ...base, ...stored } as RefineOptions
 }
 
 export function createSettings(storage: StorageLike): SettingsStore {
@@ -61,16 +44,35 @@ export function createSettings(storage: StorageLike): SettingsStore {
     await storage.set(SETTINGS_KEY, settings)
   }
 
+  const setOption = async (key: OptionKey, value: unknown): Promise<boolean> => {
+    const parsed = parseOptionValue(key, value)
+    if (parsed === undefined) return false
+    await write({ ...(await read()), [key]: parsed })
+    return true
+  }
+
+  const clearOption = async (key: OptionKey): Promise<void> => {
+    const next = { ...(await read()) }
+    delete next[key]
+    await write(next)
+  }
+
   return {
     read,
     async clear() {
       await write({})
     },
+    setOption,
+    clearOption,
     async setMode(mode) {
-      await write({ ...(await read()), mode })
+      await setOption("mode", mode)
     },
     async setModel(model) {
-      await write({ ...(await read()), model })
+      if (model === undefined) {
+        await clearOption("model")
+        return
+      }
+      await setOption("model", model)
     },
     async effectiveOptions(base) {
       return mergeSettings(base, await read())

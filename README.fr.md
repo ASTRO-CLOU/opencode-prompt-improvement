@@ -52,6 +52,9 @@ Toutes les commandes répondent par des notifications et ne lancent jamais d'age
 | `/imp-model [provider/id#variant]` | Choisir un modèle et une variante ; `status` affiche l'actuel |
 | `/imp-model off` | Garder le nettoyage, désactiver les appels au modèle |
 | `/imp-force <prompt>` | Améliorer un prompt une fois, même si l'amélioration est désactivée |
+| `/imp-config [clé valeur]` | Afficher ou modifier les paramètres à chaud |
+
+`/imp-config` affiche les valeurs actuelles, modifie un paramètre ou efface tous les remplacements avec `reset`. Utilisez `clear` comme valeur pour supprimer un seul remplacement. Clés : `mode`, `model`, `maxGrowth`, `skipCommands`, `skipDetailed`, `detailedThreshold`, `llmTimeoutMs`.
 
 `/imp-force` renvoie votre texte dans le hook avec un marqueur interne. Il ignore l'interrupteur et les règles d'omission, mais conserve toutes les vérifications de sécurité. Le marqueur n'atteint jamais le modèle ni l'historique.
 
@@ -95,7 +98,7 @@ Les commandes enregistrent les réglages par session. Les options peuvent aussi 
 
 - En mode `llm`, `ctx.experimental.generate.text` est appelé en premier : seulement votre texte et l'instruction, sans le prompt système d'OpenCode. Une session temporaire sert de repli.
 
-- L'instruction demande trois lignes (`Кто:` / `Задача:` / `Важно:`) et `/no_think` pour Qwen3. Les prompts avec `@mentions` ignorent la phase LLM.
+- L'instruction interne demande trois lignes avec des titres localisés : `Кто: / Задача: / Важно:` pour une entrée russe, `Who: / Task: / Important:` pour les autres langues, et `/no_think` pour Qwen3. Les prompts avec `@mentions` ignorent la phase LLM.
 
 ## Sécurité
 

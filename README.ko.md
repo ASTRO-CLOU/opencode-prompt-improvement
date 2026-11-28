@@ -52,6 +52,9 @@ opencode plugin add github:ASTRO-CLOU/opencode-prompt-improvement
 | `/imp-model [provider/id#variant]` | 모델과 변형 선택. `status`는 현재 모델 표시 |
 | `/imp-model off` | 정리는 유지하고 모델 호출 비활성화 |
 | `/imp-force <prompt>` | 개선이 꺼져 있어도 프롬프트를 한 번 개선 |
+| `/imp-config [키 값]` | 런타임 설정 표시 또는 변경 |
+
+`/imp-config`는 현재 값을 표시하고, 설정 하나를 변경하며, `reset`으로 모든 재정의를 지웁니다. 값에 `clear`를 사용하면 재정의 하나만 제거합니다. 키: `mode`, `model`, `maxGrowth`, `skipCommands`, `skipDetailed`, `detailedThreshold`, `llmTimeoutMs`.
 
 `/imp-force`는 내부 표식과 함께 텍스트를 prompt 훅에 다시 보냅니다. 스위치와 건너뛰기 규칙을 무시하지만 모든 안전 검사는 유지합니다. 표식은 모델이나 대화 기록에 전달되지 않습니다.
 
@@ -95,7 +98,7 @@ opencode plugin add github:ASTRO-CLOU/opencode-prompt-improvement
 
 - `llm` 모드에서는 먼저 `ctx.experimental.generate.text`를 호출합니다. 텍스트와 지시만 보내며 OpenCode 시스템 프롬프트는 포함하지 않습니다. 임시 세션이 대체 경로입니다.
 
-- 지시는 세 줄(`Кто:` / `Задача:` / `Важно:`)과 Qwen3용 `/no_think`를 요청합니다. `@멘션`이 있는 프롬프트는 LLM 단계를 건너뜁니다.
+- 내부 지시는 언어에 맞는 제목으로 세 줄을 요청합니다. 러시아어 입력에는 `Кто: / Задача: / Важно:`, 다른 언어에는 `Who: / Task: / Important:`를 사용하고 Qwen3에는 `/no_think`를 추가합니다. `@멘션`이 있는 프롬프트는 LLM 단계를 건너뜁니다.
 
 ## 안전
 

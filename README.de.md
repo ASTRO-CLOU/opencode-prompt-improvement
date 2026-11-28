@@ -52,6 +52,9 @@ Alle Befehle antworten über Benachrichtigungen und starten keinen Agenten.
 | `/imp-model [provider/id#variant]` | Modell und Variante wählen; `status` zeigt das aktuelle |
 | `/imp-model off` | Bereinigung behalten, Modellaufrufe deaktivieren |
 | `/imp-force <prompt>` | Einen Prompt einmal verbessern, auch wenn die Verbesserung aus ist |
+| `/imp-config [Schlüssel Wert]` | Laufende Einstellungen anzeigen oder ändern |
+
+`/imp-config` zeigt die aktuellen Werte, ändert eine Einstellung oder setzt mit `reset` alle Überschreibungen zurück. Mit `clear` als Wert wird eine einzelne Überschreibung entfernt. Schlüssel: `mode`, `model`, `maxGrowth`, `skipCommands`, `skipDetailed`, `detailedThreshold`, `llmTimeoutMs`.
 
 `/imp-force` schickt deinen Text mit einer internen Markierung erneut durch den Prompt-Hook. Der Schalter und die Überspringregeln werden ignoriert, alle Sicherheitsprüfungen bleiben. Die Markierung erreicht weder Modell noch Verlauf.
 
@@ -95,7 +98,7 @@ Die Befehle speichern Einstellungen pro Sitzung. Plugin-Optionen lassen sich auc
 
 - Im Modus `llm` wird zuerst `ctx.experimental.generate.text` aufgerufen: nur dein Text und die Anweisung, ohne OpenCode-Systemprompt. Eine temporäre Sitzung ist der Fallback.
 
-- Die Anweisung verlangt drei Zeilen (`Кто:` / `Задача:` / `Важно:`) und `/no_think` für Qwen3. Prompts mit `@Erwähnungen` überspringen den LLM-Durchlauf.
+- Die interne Anweisung verlangt drei Zeilen mit lokalisierten Überschriften: für russische Eingaben `Кто: / Задача: / Важно:`, für andere Sprachen `Who: / Task: / Important:` und für Qwen3 `/no_think`. Prompts mit `@Erwähnungen` überspringen den LLM-Durchlauf.
 
 ## Sicherheit
 

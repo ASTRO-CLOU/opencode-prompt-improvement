@@ -52,6 +52,9 @@ opencode plugin add github:ASTRO-CLOU/opencode-prompt-improvement
 | `/imp-model [provider/id#variant]` | اختيار النموذج والنسخة؛ `status` يعرض الحالي |
 | `/imp-model off` | الاحتفاظ بالتنظيف وإيقاف استدعاءات النموذج |
 | `/imp-force <prompt>` | تحسين مطالبة واحدة مرة واحدة، حتى لو كان التحسين متوقفًا |
+| `/imp-config [المفتاح القيمة]` | عرض الإعدادات أثناء التشغيل أو تغييرها |
+
+يعرض `/imp-config` القيم الحالية، أو يغيّر إعدادًا واحدًا، أو يمسح كل التجاوزات عبر `reset`. استخدم `clear` كقيمة لإزالة تجاوز واحد. المفاتيح: `mode`, `model`, `maxGrowth`, `skipCommands`, `skipDetailed`, `detailedThreshold`, `llmTimeoutMs`.
 
 `/imp-force` يُعيد إرسال نصك عبر خطاف الطلب بعلامة داخلية. يتجاهل المفتاح وقواعد التخطي، لكنه يحتفظ بكل فحوصات الأمان. العلامة لا تصل إلى النموذج ولا إلى السجل.
 
@@ -95,7 +98,7 @@ opencode plugin add github:ASTRO-CLOU/opencode-prompt-improvement
 
 - في وضع `llm` يُستدعى أولًا `ctx.experimental.generate.text`: نصك والتعليمة فقط، دون مطالبة نظام OpenCode. جلسة مؤقتة هي البديل.
 
-- تطلب التعليمة ثلاثة أسطر (`Кто:` / `Задача:` / `Важно:`) و`/no_think` لـ Qwen3. المطالبات التي تحتوي `@إشارات` تتخطى مرحلة LLM.
+- تطلب التعليمات الداخلية ثلاثة أسطر بعناوين محلية: `Кто: / Задача: / Важно:` للمدخلات الروسية، و`Who: / Task: / Important:` للغات الأخرى، مع `/no_think` لـ Qwen3. المطالبات التي تحتوي `@إشارات` تتخطى مرحلة LLM.
 
 ## الأمان
 

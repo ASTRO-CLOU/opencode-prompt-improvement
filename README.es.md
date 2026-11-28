@@ -52,6 +52,9 @@ Todos los comandos responden con notificaciones y nunca inician un agente.
 | `/imp-model [provider/id#variant]` | Elegir modelo y variante; `status` muestra el actual |
 | `/imp-model off` | Mantener la limpieza, desactivar llamadas al modelo |
 | `/imp-force <prompt>` | Mejorar un prompt una vez, incluso con la mejora desactivada |
+| `/imp-config [clave valor]` | Mostrar o cambiar ajustes en tiempo de ejecución |
+
+`/imp-config` muestra los valores actuales, cambia un ajuste o borra todas las sobrescrituras con `reset`. Usa `clear` como valor para quitar una sola sobrescritura. Claves: `mode`, `model`, `maxGrowth`, `skipCommands`, `skipDetailed`, `detailedThreshold`, `llmTimeoutMs`.
 
 `/imp-force` reenvía tu texto por el hook con una marca interna. Ignora el interruptor y las reglas de omisión, pero mantiene todas las comprobaciones de seguridad. La marca nunca llega al modelo ni al historial.
 
@@ -95,7 +98,7 @@ Los comandos guardan la configuración por sesión. Las opciones también pueden
 
 - En modo `llm`, primero se llama a `ctx.experimental.generate.text`: solo tu texto y la instrucción, sin el prompt de sistema de OpenCode. Una sesión temporal es el respaldo.
 
-- La instrucción pide tres líneas (`Кто:` / `Задача:` / `Важно:`) y `/no_think` para Qwen3. Los prompts con `@menciones` omiten la fase LLM.
+- La instrucción interna pide tres líneas con encabezados localizados: `Кто: / Задача: / Важно:` para entradas en ruso, `Who: / Task: / Important:` para otros idiomas y `/no_think` para Qwen3. Los prompts con `@menciones` omiten la fase LLM.
 
 ## Seguridad
 

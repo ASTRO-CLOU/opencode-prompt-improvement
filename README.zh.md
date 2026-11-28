@@ -52,6 +52,9 @@ opencode plugin add github:ASTRO-CLOU/opencode-prompt-improvement
 | `/imp-model [provider/id#variant]` | 选择模型和变体；`status` 显示当前模型 |
 | `/imp-model off` | 保留清理，关闭模型调用 |
 | `/imp-force <prompt>` | 只改进一次提示词，即使改进已关闭 |
+| `/imp-config [键 值]` | 查看或修改运行时设置 |
+
+`/imp-config` 显示当前值、修改单个设置，或用 `reset` 清除所有覆盖。将值设为 `clear` 可删除单个覆盖。键名：`mode`、`model`、`maxGrowth`、`skipCommands`、`skipDetailed`、`detailedThreshold`、`llmTimeoutMs`。
 
 `/imp-force` 会用内部标记把文本重新送入 prompt 钩子。它忽略开关和跳过规则，但保留全部安全检查。标记不会进入模型或对话记录。
 
@@ -95,7 +98,7 @@ opencode plugin add github:ASTRO-CLOU/opencode-prompt-improvement
 
 - `llm` 模式先调用 `ctx.experimental.generate.text`：只发送你的文本和指令，不带 OpenCode 系统提示词。临时会话作为回退。
 
-- 指令要求三行（`Кто:` / `Задача:` / `Важно:`），Qwen3 还会加 `/no_think`。带 `@提及` 的提示词跳过 LLM 阶段。
+- 内部指令要求用随语言变化的标题写成三行：俄语输入使用 `Кто: / Задача: / Важно:`，其他语言使用 `Who: / Task: / Important:`；Qwen3 还会加 `/no_think`。带 `@提及` 的提示词跳过 LLM 阶段。
 
 ## 安全
 

@@ -34,6 +34,61 @@ function readModel(value: unknown): ModelRef | undefined {
     : { providerID, id }
 }
 
+export type OptionKey =
+  | "mode"
+  | "model"
+  | "maxGrowth"
+  | "skipCommands"
+  | "skipDetailed"
+  | "detailedThreshold"
+  | "llmTimeoutMs"
+
+export const OPTION_KEYS: readonly OptionKey[] = [
+  "mode",
+  "model",
+  "maxGrowth",
+  "skipCommands",
+  "skipDetailed",
+  "detailedThreshold",
+  "llmTimeoutMs",
+]
+
+function clampNumber(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
+}
+
+export function parseOptionValue(key: OptionKey, raw: unknown): unknown | undefined {
+  switch (key) {
+    case "mode":
+      return raw === "llm" || raw === "deterministic" ? raw : undefined
+    case "model":
+      return readModel(raw)
+    case "maxGrowth":
+    case "detailedThreshold":
+    case "llmTimeoutMs": {
+      if (typeof raw !== "number" || !Number.isFinite(raw)) return undefined
+      if (key === "maxGrowth") return clampNumber(raw, 0, 1)
+      if (key === "detailedThreshold") return clampNumber(raw, 0, 100_000)
+      return clampNumber(raw, 100, 60_000)
+    }
+    case "skipCommands":
+    case "skipDetailed":
+      return typeof raw === "boolean" ? raw : undefined
+  }
+}
+
+export function parseOptionInput(key: OptionKey, raw: string): unknown | undefined {
+  if (key === "skipCommands" || key === "skipDetailed") {
+    if (raw === "true") return true
+    if (raw === "false") return false
+    return undefined
+  }
+  if (key === "mode" || key === "model") return parseOptionValue(key, raw)
+  const value = Number(raw)
+  if (raw.trim().length === 0 || !Number.isFinite(value)) return undefined
+  return parseOptionValue(key, value)
+}
+
 export function resolveOptions(raw: unknown): RefineOptions {
   const input = asRecord(raw)
   const mode: RefineMode = input.mode === "llm" ? "llm" : "deterministic"

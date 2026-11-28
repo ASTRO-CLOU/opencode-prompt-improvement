@@ -52,6 +52,9 @@ All commands report through notifications and never start an agent.
 | `/imp-model [provider/id#variant]` | Select a model and variant; `status` shows the current one |
 | `/imp-model off` | Keep cleanup, disable model calls |
 | `/imp-force <prompt>` | Improve one prompt once, even when improvement is off |
+| `/imp-config [key value]` | Show or change runtime settings |
+
+`/imp-config` shows the current values, changes one setting, or clears all overrides with `reset`. Use `clear` as the value to remove a single override. Keys: `mode`, `model`, `maxGrowth`, `skipCommands`, `skipDetailed`, `detailedThreshold`, `llmTimeoutMs`.
 
 `/imp-force` re-sends your text through the prompt hook with an internal marker. It ignores the on/off switch and skip rules, but keeps every safety check. The marker never reaches the model or the transcript.
 
@@ -95,7 +98,7 @@ Settings are stored per session by the plugin commands. Plugin options can also 
 
 - In `llm` mode the plugin calls `ctx.experimental.generate.text` first: only your text and the rewrite instruction, no OpenCode system prompt. A temporary session is used as fallback.
 
-- The prompt asks for three lines (`Кто:` / `Задача:` / `Важно:`) and `/no_think` for Qwen3. Prompts with `@mentions` skip the LLM pass.
+- The internal prompt asks for three lines with localized headings: `Кто: / Задача: / Важно:` for Russian input, `Who: / Task: / Important:` for other languages, plus `/no_think` for Qwen3. Prompts with `@mentions` skip the LLM pass.
 
 ## Safety
 

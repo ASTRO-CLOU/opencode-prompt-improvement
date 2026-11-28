@@ -52,6 +52,9 @@ opencode plugin add github:ASTRO-CLOU/opencode-prompt-improvement
 | `/imp-model [provider/id#variant]` | モデルとバリアントを選択。`status` で現在値を表示 |
 | `/imp-model off` | クリーンアップを残し、モデル呼び出しを無効化 |
 | `/imp-force <prompt>` | 改善がオフでも、一度だけプロンプトを改善 |
+| `/imp-config [キー 値]` | 実行時の設定を表示・変更 |
+
+`/imp-config` は現在の値を表示し、1つの設定を変更し、`reset` ですべての上書きを消去します。値に `clear` を指定すると1つの上書きだけを削除します。キー: `mode`, `model`, `maxGrowth`, `skipCommands`, `skipDetailed`, `detailedThreshold`, `llmTimeoutMs`。
 
 `/imp-force` は内部マーカー付きでテキストを prompt フックに再送します。オン/オフとスキップ規則を無視しますが、安全チェックはすべて維持します。マーカーはモデルにも履歴にも送られません。
 
@@ -95,7 +98,7 @@ opencode plugin add github:ASTRO-CLOU/opencode-prompt-improvement
 
 - `llm` モードではまず `ctx.experimental.generate.text` を呼びます。送るのはテキストと指示のみで、OpenCode のシステムプロンプトは含みません。一時セッションがフォールバックです。
 
-- 指示は 3 行（`Кто:` / `Задача:` / `Важно:`）と Qwen3 向けの `/no_think` を求めます。`@メンション` を含むプロンプトは LLM をスキップします。
+- 内部指示は言語に応じた見出しで 3 行を求めます。ロシア語入力では `Кто: / Задача: / Важно:`、他の言語では `Who: / Task: / Important:`、Qwen3 には `/no_think` を付けます。`@メンション` を含むプロンプトは LLM をスキップします。
 
 ## 安全性
 

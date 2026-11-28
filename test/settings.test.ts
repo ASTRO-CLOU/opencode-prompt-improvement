@@ -78,3 +78,55 @@ test("malformed stored settings are ignored", async () => {
 
   assert.deepEqual(await settings.effectiveOptions(DEFAULT_OPTIONS), DEFAULT_OPTIONS)
 })
+
+test("runtime option overrides are validated and persisted", async () => {
+  const storage = createStorage()
+  const settings = createSettings(storage)
+
+  assert.equal(await settings.setOption("maxGrowth", 0.25), true)
+  assert.equal(await settings.setOption("skipCommands", false), true)
+  assert.equal(await settings.setOption("detailedThreshold", 500), true)
+  assert.equal(await settings.setOption("llmTimeoutMs", 1500), true)
+
+  const effective = await settings.effectiveOptions(DEFAULT_OPTIONS)
+  assert.equal(effective.maxGrowth, 0.25)
+  assert.equal(effective.skipCommands, false)
+  assert.equal(effective.detailedThreshold, 500)
+  assert.equal(effective.llmTimeoutMs, 1500)
+})
+
+test("invalid runtime option values are rejected", async () => {
+  const storage = createStorage()
+  const settings = createSettings(storage)
+
+  assert.equal(await settings.setOption("mode", "magic"), false)
+  assert.equal(await settings.setOption("skipDetailed", "yes"), false)
+  assert.equal(await settings.setOption("llmTimeoutMs", "fast"), false)
+
+  assert.deepEqual(await settings.effectiveOptions(DEFAULT_OPTIONS), DEFAULT_OPTIONS)
+})
+
+test("clearOption removes only the selected override", async () => {
+  const storage = createStorage()
+  const settings = createSettings(storage)
+
+  await settings.setOption("maxGrowth", 0.2)
+  await settings.setOption("skipCommands", false)
+  await settings.clearOption("maxGrowth")
+
+  const effective = await settings.effectiveOptions(DEFAULT_OPTIONS)
+  assert.equal(effective.maxGrowth, DEFAULT_OPTIONS.maxGrowth)
+  assert.equal(effective.skipCommands, false)
+})
+
+test("numeric runtime options are clamped to supported ranges", async () => {
+  const storage = createStorage()
+  const settings = createSettings(storage)
+
+  await settings.setOption("maxGrowth", 5)
+  await settings.setOption("detailedThreshold", -10)
+
+  const effective = await settings.effectiveOptions(DEFAULT_OPTIONS)
+  assert.equal(effective.maxGrowth, 1)
+  assert.equal(effective.detailedThreshold, 0)
+})

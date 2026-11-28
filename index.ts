@@ -9,12 +9,17 @@ import {
   type AvailableModel,
 } from "./src/model.ts"
 import { remapMentions, type MentionCarrier } from "./src/mentions.ts"
-import { resolveOptions } from "./src/options.ts"
+import {
+  OPTION_KEYS,
+  parseOptionInput,
+  resolveOptions,
+  type OptionKey,
+} from "./src/options.ts"
 import { refinePrompt } from "./src/refine.ts"
 import { LLM_PROMPT_PREFIX } from "./src/llm.ts"
 import { RefineRpc, type NoticeVariant } from "./src/contract.ts"
 import { createSettings } from "./src/settings.ts"
-import type { GenerateTextFn, Mention, ModelRef } from "./src/types.ts"
+import type { GenerateTextFn, Mention, ModelRef, RefineOptions } from "./src/types.ts"
 
 function applyMentions(
   attachments: MentionCarrier[],
@@ -234,6 +239,70 @@ export default Plugin.define({
       await notify(sessionID, `Mode: ${effective.mode}. Model: ${model}.`)
     }
 
+    const reportConfig = async (sessionID: string) => {
+      const effective: RefineOptions = await effectiveOptions()
+      const model = await describeModel(sessionID, effective.model)
+      const values = [
+        `mode=${effective.mode}`,
+        `model=${model}`,
+        `maxGrowth=${effective.maxGrowth}`,
+        `skipCommands=${effective.skipCommands}`,
+        `skipDetailed=${effective.skipDetailed}`,
+        `detailedThreshold=${effective.detailedThreshold}`,
+        `llmTimeoutMs=${effective.llmTimeoutMs}`,
+      ]
+      await notify(sessionID, values.join("; "), "info", true)
+    }
+
+    const changeConfig = async (sessionID: string, argument: string) => {
+      const parts = argument.split(/\s+/).filter((part) => part.length > 0)
+      if (parts.length === 0) {
+        await reportConfig(sessionID)
+        return
+      }
+
+      const keyword = parts[0].toLowerCase()
+      if (keyword === "reset") {
+        await settings.clear()
+        await notify(sessionID, "All runtime settings reset. Plugin options are used again.")
+        await reportConfig(sessionID)
+        return
+      }
+
+      if (!OPTION_KEYS.includes(keyword as OptionKey)) {
+        await notify(sessionID, `Unknown setting: ${keyword}.`, "warning")
+        return
+      }
+
+      const key = keyword as OptionKey
+      const rawValue = parts.slice(1).join(" ")
+      if (rawValue.length === 0 || ["clear", "off", "none"].includes(rawValue.toLowerCase())) {
+        await settings.clearOption(key)
+        await notify(sessionID, `${key} reset to its default or global value.`)
+        await reportConfig(sessionID)
+        return
+      }
+
+      if (key === "model") {
+        const models = await loadModels(sessionID)
+        if (models === undefined) return
+        const model = parseModelArgument(rawValue, models)
+        if (model === undefined) {
+          await notify(sessionID, "Model not found. Use /imp-models to list models.", "warning")
+          return
+        }
+        await settings.setOption("model", model)
+      } else {
+        const value = parseOptionInput(key, rawValue)
+        if (value === undefined || !(await settings.setOption(key, value))) {
+          await notify(sessionID, `Invalid value for ${key}.`, "warning")
+          return
+        }
+      }
+
+      await reportConfig(sessionID)
+    }
+
     const loadModels = async (sessionID: string): Promise<AvailableModel[] | undefined> => {
       try {
         return await listAvailableModels(ctx.model)
@@ -340,6 +409,13 @@ export default Plugin.define({
             text: `${FORCE_PROMPT_PREFIX}${text}`,
             delivery: "steer",
           })
+        },
+      })
+      editor.add({
+        name: "imp-config",
+        description: "Show or change refinement settings at runtime",
+        execute: async ({ sessionID, prompt }) => {
+          await changeConfig(sessionID, (prompt.text ?? "").trim())
         },
       })
     })
