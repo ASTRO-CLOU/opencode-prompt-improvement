@@ -60,7 +60,11 @@ export function createSettings(storage: StorageLike): SettingsStore {
   return {
     read,
     async clear() {
-      await write({})
+      if (storage.remove !== undefined) {
+        await storage.remove(SETTINGS_KEY)
+        return
+      }
+      await storage.set(SETTINGS_KEY, undefined)
     },
     setOption,
     clearOption,

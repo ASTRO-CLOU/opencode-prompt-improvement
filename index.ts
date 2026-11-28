@@ -269,12 +269,11 @@ export default Plugin.define({
         return
       }
 
-      if (!OPTION_KEYS.includes(keyword as OptionKey)) {
-        await notify(sessionID, `Unknown setting: ${keyword}.`, "warning")
+      const key = OPTION_KEYS.find((option) => option.toLowerCase() === keyword)
+      if (key === undefined) {
+        await notify(sessionID, `Unknown setting: ${parts[0]}.`, "warning")
         return
       }
-
-      const key = keyword as OptionKey
       const rawValue = parts.slice(1).join(" ")
       if (rawValue.length === 0 || ["clear", "off", "none"].includes(rawValue.toLowerCase())) {
         await settings.clearOption(key)

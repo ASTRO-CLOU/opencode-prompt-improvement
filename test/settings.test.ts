@@ -13,6 +13,9 @@ function createStorage() {
     async set(key: string, value: unknown) {
       values.set(key, value)
     },
+    async remove(key: string) {
+      values.delete(key)
+    },
   }
 }
 
