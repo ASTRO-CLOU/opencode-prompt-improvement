@@ -1,6 +1,6 @@
 import { Plugin } from "@opencode/plugin"
 import { createPromptBudget } from "./src/budget.ts"
-import { createToggle } from "./src/control.ts"
+import { createToggle, FORCE_PROMPT_PREFIX } from "./src/control.ts"
 import {
   findModel,
   formatModelList,
@@ -79,6 +79,9 @@ export default Plugin.define({
     const removeSession = ctx.session.remove as unknown as
       | ((input: { sessionID: string }) => Promise<void> | void)
       | undefined
+    const promptInSession = ctx.session.prompt as unknown as
+      | ((input: { sessionID: string; text: string; delivery?: "steer" | "queue" }) => Promise<unknown>)
+      | undefined
     const generateText = (
       ctx.experimental as
         | { generate?: { text?: (input: { prompt: string; model: ModelRef | null }) => Promise<unknown> } }
@@ -139,9 +142,12 @@ export default Plugin.define({
     const rpc = await ctx.rpc.register(RefineRpc, {})
 
     await ctx.session.hook("prompt", async (event) => {
-      if ((await toggle.isEnabled()) === false) return
+      const forced = event.prompt.text.startsWith(FORCE_PROMPT_PREFIX)
+      const original = forced
+        ? event.prompt.text.slice(FORCE_PROMPT_PREFIX.length)
+        : event.prompt.text
 
-      const original = event.prompt.text
+      if (!forced && (await toggle.isEnabled()) === false) return
       if (original.startsWith(LLM_PROMPT_PREFIX)) return
       const files = event.prompt.files ?? []
       const agents = event.prompt.agents ?? []
@@ -155,6 +161,7 @@ export default Plugin.define({
         generate,
         !hasMentions,
         (error) => reportLlmError(event.sessionID, error),
+        forced,
       )
       if (refinement === undefined || refinement.text === original) return
 
@@ -313,6 +320,26 @@ export default Plugin.define({
             return
           }
           await setModel(sessionID, argument)
+        },
+      })
+      editor.add({
+        name: "imp-force",
+        description: "Improve one prompt now, even when improvement is off",
+        execute: async ({ sessionID, prompt }) => {
+          const text = (prompt.text ?? "").trim()
+          if (text.length === 0) {
+            await notify(sessionID, "Usage: /imp-force <prompt>", "warning")
+            return
+          }
+          if (promptInSession === undefined) {
+            await notify(sessionID, "Forced improvement is unavailable in this host.", "error")
+            return
+          }
+          await promptInSession({
+            sessionID,
+            text: `${FORCE_PROMPT_PREFIX}${text}`,
+            delivery: "steer",
+          })
         },
       })
     })

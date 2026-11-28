@@ -51,6 +51,7 @@ interface Harness {
   notices: Notice[]
   createdSessions: CreatedSession[]
   oneShotCalls: { count: number; prompt?: string }
+  forcedEvents: PromptEvent[]
   setup(): Promise<void>
   prompt(text: string, files?: PromptFile[], metadata?: Record<string, unknown>): Promise<PromptEvent>
 }
@@ -66,6 +67,7 @@ function createHarness(
   const notices: Notice[] = []
   const createdSessions: CreatedSession[] = []
   const oneShotCalls: { count: number; prompt?: string } = { count: 0 }
+  const forcedEvents: PromptEvent[] = []
   let promptHook: ((event: PromptEvent) => Promise<void> | void) | undefined
 
   const context = {
@@ -104,6 +106,17 @@ function createHarness(
             remove: async (input: { sessionID: string }) => {
               const session = createdSessions.find((item) => item.id === input.sessionID)
               if (session !== undefined) session.removed = true
+            },
+            prompt: async (input: { text: string }) => {
+              if (promptHook === undefined) throw new Error("prompt hook was not registered")
+              const event = {
+                prompt: { text: input.text, files: [] },
+                metadata: { displayText: input.text },
+                delivery: "steer",
+              } as PromptEvent
+              await promptHook(event)
+              forcedEvents.push(event)
+              return event
             },
           }
         : {}),
@@ -158,6 +171,7 @@ function createHarness(
     notices,
     createdSessions,
     oneShotCalls,
+    forcedEvents,
     async setup() {
       await plugin.setup(context)
     },
@@ -184,6 +198,7 @@ test("setup registers the prompt hook and every command", async () => {
     "imp-off",
     "imp-models",
     "imp-model",
+    "imp-force",
   ])
 })
 
@@ -213,6 +228,36 @@ test("disabled improvement leaves the prompt untouched", async () => {
   const event = await harness.prompt("hello   world  ")
   assert.equal(event.prompt.text, "hello   world  ")
   assert.equal(event.metadata?.displayText, "hello   world  ")
+})
+
+test("imp-force improves one prompt while improvement is disabled", async () => {
+  const harness = createHarness()
+  harness.storage.set("opencode-prompt-improvement.enabled", false)
+  await harness.setup()
+
+  await harness.commands.get("imp-force")?.execute({
+    sessionID: "ses_1",
+    prompt: { text: "hello   world  " },
+  })
+
+  assert.equal(harness.forcedEvents.length, 1)
+  assert.equal(harness.forcedEvents[0]?.prompt.text, "hello world")
+  assert.equal(harness.forcedEvents[0]?.metadata?.displayText, "hello world")
+  assert.equal(harness.commands.get("imp-off")?.name, "imp-off")
+  assert.equal(harness.storage.get("opencode-prompt-improvement.enabled"), false)
+})
+
+test("imp-force bypasses structured-prompt skipping", async () => {
+  const harness = createHarness()
+  harness.storage.set("opencode-prompt-improvement.enabled", false)
+  await harness.setup()
+
+  await harness.commands.get("imp-force")?.execute({
+    sessionID: "ses_1",
+    prompt: { text: "-  one\n-  two\n-  three" },
+  })
+
+  assert.equal(harness.forcedEvents[0]?.prompt.text, "- one\n- two\n- three")
 })
 
 test("mentions are remapped to the cleaned text", async () => {

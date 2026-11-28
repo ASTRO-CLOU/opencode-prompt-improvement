@@ -2,6 +2,8 @@ import type { StorageLike } from "./types.ts"
 
 const STATE_KEY = "opencode-prompt-improvement.enabled"
 
+export const FORCE_PROMPT_PREFIX = "[imp-force] "
+
 export interface RefineToggle {
   isEnabled(): Promise<boolean>
   setEnabled(enabled: boolean): Promise<void>

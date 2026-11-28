@@ -14,8 +14,9 @@ function hasStructuredLines(text: string): boolean {
   return false
 }
 
-export function shouldSkip(text: string, options: RefineOptions): boolean {
+export function shouldSkip(text: string, options: RefineOptions, force = false): boolean {
   if (text.length === 0 || text.trim().length === 0) return true
+  if (force) return false
   if (options.skipCommands && /^\/[A-Za-z][\w-]*(?:[ \t]|$)/.test(text.trimStart())) return true
   if (text.trimStart().startsWith("*")) return true
   if (options.skipDetailed) {
@@ -41,8 +42,9 @@ export async function refinePrompt(
   generate?: GenerateTextFn,
   allowLlm = true,
   onError?: (error: unknown) => Promise<void> | void,
+  force = false,
 ): Promise<Refinement | undefined> {
-  if (shouldSkip(text, options)) return undefined
+  if (shouldSkip(text, options, force)) return undefined
 
   const deterministic = normalizeText(text)
   let candidate = deterministic.text
