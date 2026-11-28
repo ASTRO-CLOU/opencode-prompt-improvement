@@ -1,0 +1,56 @@
+{
+  "name": "opencode-prompt-improvement",
+  "version": "0.0.1",
+  "description": "OpenCode V2 plugin that tidies prompt text on send. No new requirements, no model calls by default.",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ASTRO-CLOU/opencode-prompt-improvement.git"
+  },
+  "homepage": "https://github.com/ASTRO-CLOU/opencode-prompt-improvement#readme",
+  "bugs": {
+    "url": "https://github.com/ASTRO-CLOU/opencode-prompt-improvement/issues"
+  },
+  "type": "module",
+  "exports": {
+    ".": "./index.ts",
+    "./rpc": "./src/rpc.ts",
+    "./tui": "./src/tui.ts",
+    "./gui-experimental": "./dist/gui-experimental.cjs"
+  },
+  "files": [
+    "index.ts",
+    "src",
+    "dist",
+    "vite.config.ts",
+    "LICENSE",
+    "README*.md"
+  ],
+  "scripts": {
+    "test": "node --test",
+    "typecheck": "tsc --noEmit",
+    "build:gui": "vite build",
+    "check": "npm test && npm run typecheck && npm run build:gui",
+    "prepublishOnly": "npm run check"
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "keywords": [
+    "opencode",
+    "opencode-plugin",
+    "opencode-v2",
+    "prompt",
+    "hook"
+  ],
+  "license": "MIT",
+  "dependencies": {
+    "@opencode/plugin": "^2.3.2"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "solid-js": "1.9",
+    "typescript": "^5.9.0",
+    "vite": "^7.3.8",
+    "vite-plugin-solid": "2.11"
+  }
+}
